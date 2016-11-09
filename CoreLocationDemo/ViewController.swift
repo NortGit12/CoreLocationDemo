@@ -15,6 +15,7 @@ class ViewController: UIViewController {
     // MARK: - _Properties
     //==================================================
     
+    var currentLocation: CLLocation?
     var locationManager: CLLocationManager?
     var startLocation: CLLocation?
     
@@ -28,7 +29,13 @@ class ViewController: UIViewController {
         locationManager = CLLocationManager()
         locationManager?.delegate = self
         locationManager?.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager?.requestWhenInUseAuthorization()
+        
+        // When in Use (both)
+//        locationManager?.requestWhenInUseAuthorization()
+        
+        // Always in Use
+        
+        locationManager?.requestAlwaysAuthorization()
         
         calculateHomeToPointsOfInterest()
     }
@@ -40,8 +47,20 @@ extension ViewController: CLLocationManagerDelegate {
         
         if status == .authorizedAlways || status == .authorizedWhenInUse {
             
+            // When in Use - One-time update
+            
+            locationManager?.requestLocation()
+            
+            // When in Use - Continual updates & Always in Use updates
+            
+            locationManager?.allowsBackgroundLocationUpdates = true
             locationManager?.startUpdatingLocation()
         }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        
+        print("Location error: \(error.localizedDescription)")
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -51,6 +70,7 @@ extension ViewController: CLLocationManagerDelegate {
         if startLocation == nil {
             
             startLocation = locations.first
+            currentLocation = locations.first
             
         } else {
             
@@ -62,6 +82,8 @@ extension ViewController: CLLocationManagerDelegate {
                 NSLog("Error unwrapping the latest location.")
                 return
             }
+            
+            currentLocation = latestLocation
             
             let distanceInMeters = startLocation?.distance(from: latestLocation)
             print("Distance in meters: \(distanceInMeters)")
